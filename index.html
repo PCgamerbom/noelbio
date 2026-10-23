@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08090d">
+<title>NOEL — BIO</title>
+
+<style>
+:root {
+    --accent: #b8ff65;
+    --bg: #08090d;
+    --text: #ffffff;
+    --muted: #a1a1aa;
+}
+
+* {
+    box-sizing: border-box;
+    cursor: none;
+}
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    isolation: isolate;
+}
+
+button, a, input {
+    font: inherit;
+}
+
+button {
+    color: inherit;
+}
+
+/* BACKGROUND */
+
+.background-fallback,
+.wallpaper,
+.background-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.background-fallback {
+    z-index: -3;
+    background:
+        radial-gradient(ellipse at 20% 20%, #253421, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, #17252a, transparent 45%),
+        #08090d;
+}
+
+.wallpaper {
+    z-index: -2;
+    object-fit: cover;
+    background: transparent;
+    filter: brightness(.42) saturate(.85);
+}
+
+.background-overlay {
+    z-index: -1;
+    background: linear-gradient(
+        135deg,
+        rgba(4, 5, 8, .72),
+        rgba(4, 5, 8, .25),
+        rgba(4, 5, 8, .82)
+    );
+}
+
+/* EFEITO DE GRANULAÇÃO */
+
+.grain {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: .10;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+}
+
+/* HEADER */
+
+.topbar {
+    position: relative;
+    z-index: 8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px clamp(20px, 6vw, 85px);
+}
+
+.brand {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .28em;
+}
+
+.brand span {
+    color: var(--accent);
+}
+
+.top-status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 10px;
+    color: #c4c4cc;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 14px var(--accent);
+    animation: pulse 1.8s infinite;
+}
+
+/* CONTEÚDO */
+
+.main {
+    position: relative;
+    z-index: 2;
+    min-height: calc(100vh - 100px);
+    display: grid;
+    place-items: center;
+    padding: 30px 18px 85px;
+}
+
+.bio-card {
+    position: relative;
+    width: min(100%, 460px);
+    padding: 38px clamp(22px, 5vw, 42px);
+    text-align: center;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 22px;
+    background: linear-gradient(
+        145deg,
+        rgba(25,27,33,.82),
+        rgba(9,10,14,.78)
+    );
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    box-shadow: 0 30px 100px rgba(0,0,0,.4);
+    animation: appear .9s ease both;
+}
+
+/* BORDA ANIMADA */
+
+.bio-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: conic-gradient(
+        from var(--angle, 0deg),
+        transparent 0%,
+        transparent 35%,
+        var(--accent) 48%,
+        rgba(255,255,255,.25) 52%,
+        transparent 65%,
+        transparent 100%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: borderSpin 6s linear infinite;
+}
+
+.eyebrow {
+    position: relative;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+}
+
+/* AVATAR ROBLOX */
+
+.avatar-link {
+    display: inline-block;
+    text-decoration: none;
+    margin-top: 24px;
+}
+
+.avatar-wrap {
+    width: 112px;
+    height: 112px;
+    padding: 3px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--accent),
+        transparent 40%,
+        rgba(255,255,255,.15),
+        var(--accent)
+    );
+    animation: borderSpin 7s linear infinite;
+    transition: transform .3s;
+}
+
+.avatar-link:hover .avatar-wrap {
+    transform: scale(1.06);
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 4px solid #14151b;
+    border-radius: 50%;
+    background: #111217;
+}
+
+.avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* STATUS ABAIXO DO AVATAR */
+
+.presence {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #b9bbc3;
+}
+
+.presence-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #85858d;
+}
+
+.presence.online .presence-dot {
+    background: #45df83;
+    box-shadow: 0 0 10px rgba(69,223,131,.65);
+}
+
+.presence.in-game .presence-dot {
+    background: #58b7ff;
+    box-shadow: 0 0 10px rgba(88,183,255,.65);
+}
+
+.name {
+    margin: 23px 0 0;
+    font-size: clamp(38px, 8vw, 53px);
+    font-weight: 950;
+    letter-spacing: -.075em;
+    line-height: 1;
+}
+
+.name span {
+    color: var(--accent);
+}
+
+.tagline {
+    margin: 13px 0 25px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+/* SEPARADOR */
+
+.divider {
+    height: 1px;
+    margin: 23px 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.18),
+        transparent
+    );
+}
+
+/* REDES SOCIAIS */
+
+.socials {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+}
+
+.social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 53px;
+    padding: 11px;
+    color: white;
+    text-decoration: none;
+    background: rgba(255,255,255,.035);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    transition:
+        transform .25s,
+        border-color .25s,
+        background .25s;
+}
+
+.social:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    background: rgba(255,255,255,.075);
+}
+
+.social svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.social-text {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.social-text small {
+    display: block;
+    margin-top: 4px;
+    color: #92939c;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* PLAYER */
+
+.player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 21px;
+    padding: 13px;
+    text-align: left;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    background: rgba(0,0,0,.25);
+}
+
+.play-btn {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #111;
+    transition: transform .2s;
+}
+
+.play-btn:hover {
+    transform: scale(1.08);
+}
+
+.play-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.track {
+    min-width: 0;
+    flex: 1;
+}
+
+.track-title {
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.track-sub {
+    margin-top: 4px;
+    color: #858993;
+    font-size: 10px;
+}
+
+.timeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.time {
+    color: #999ba4;
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+}
+
+.progress {
+    height: 3px;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #373941;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 5px;
+    background: var(--accent);
+}
+
+.volume {
+    width: 55px;
+    height: 3px;
+    accent-color: var(--accent);
+}
+
+/* RODAPÉ */
+
+.footer {
+    position: absolute;
+    z-index: 3;
+    right: 15px;
+    bottom: 24px;
+    left: 15px;
+    text-align: center;
+    color: #888b94;
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.footer span {
+    color: var(--accent);
+}
+
+/* BOTÃO DE PERSONALIZAÇÃO */
+
+.settings-toggle {
+    position: fixed;
+    z-index: 12;
+    right: 20px;
+    bottom: 20px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50%;
+    background: rgba(14,15,20,.9);
+    backdrop-filter: blur(12px);
+    transition: transform .25s, border-color .25s;
+}
+
+.settings-toggle:hover {
+    transform: rotate(35deg);
+    border-color: var(--accent);
+}
+
+.settings-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* PAINEL DE CORES */
+
+.settings-panel {
+    position: fixed;
+    z-index: 12;
+    right: 20px;
+    bottom: 76px;
+    width: min(290px, calc(100vw - 40px));
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 16px;
+    background: rgba(15,16,21,.97);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 70px #0008;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity .25s, transform .25s;
+}
+
+.settings-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.close-settings {
+    border: 0;
+    background: transparent;
+    color: #aaa;
+    font-size: 21px;
+}
+
+.field {
+    margin: 15px 0;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 10px;
+    color: #c4c6cb;
+    font-size: 11px;
+}
+
+.colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.swatch {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 2px solid rgba(255,255,255,.25);
+    border-radius: 50%;
+    outline: 1px solid transparent;
+    outline-offset: 3px;
+}
+
+.swatch.active {
+    outline-color: white;
+}
+
+.custom-color {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-color input {
+    width: 35px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.reset {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #34363d;
+    border-radius: 9px;
+    background: #202127;
+    font-size: 11px;
+}
+
+/* INTRO */
+
+.intro {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    background: #07080b;
+    transition: opacity .8s, visibility .8s;
+}
+
+.intro.hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.intro-content {
+    padding: 24px;
+    text-align: center;
+    animation: appear 1s both;
+}
+
+.intro-mark {
+    margin-bottom: 28px;
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: .35em;
+}
+
+.intro-title {
+    margin: 0 0 13px;
+    font-size: clamp(27px, 5vw, 43px);
+    font-weight: 950;
+    letter-spacing: -.06em;
+}
+
+.intro-hint {
+    color: #858891;
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.start-btn {
+    margin-top: 28px;
+    padding: 15px 24px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: rgba(255,255,255,.035);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    transition: background .2s, transform .2s;
+}
+
+.start-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.1);
+}
+
+.start-btn span {
+    margin-left: 8px;
+    color: var(--accent);
+}
+
+/* CURSOR PERSONALIZADO */
+
+.cursor-dot,
+.cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.cursor-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+}
+
+.cursor-ring {
+    width: 29px;
+    height: 29px;
+    border: 1px solid var(--accent);
+    transition: width .2s, height .2s;
+}
+
+.cursor-ring.hover {
+    width: 43px;
+    height: 43px;
+}
+
+/* ANIMAÇÕES */
+
+@keyframes borderSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    50% { opacity: .35; }
+}
+
+/* CELULAR */
+
+@media (max-width: 480px) {
+    * {
+        cursor: auto;
+    }
+
+    .topbar {
+        padding: 22px 20px;
+    }
+
+    .top-status {
+        font-size: 9px;
+    }
+
+    .main {
+        padding: 15px 13px 75px;
+    }
+
+    .bio-card {
+        padding: 29px 19px;
+    }
+
+    .avatar-wrap {
+        width: 98px;
+        height: 98px;
+    }
+
+    .socials {
+        gap: 8px;
+    }
+
+    .social {
+        gap: 7px;
+        padding: 10px 6px;
+    }
+
+    .social-text {
+        font-size: 11px;
+    }
+
+    .volume {
+        width: 40px;
+    }
+
+    .cursor-dot,
+    .cursor-ring {
+        display: none;
+    }
+
+    .footer {
+        font-size: 8px;
+        letter-spacing: .1em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- VÍDEO DE FUNDO -->
+<div class="background-fallback"></div>
+
+<video
+    class="wallpaper"
+    id="backgroundVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+>
+    <source src="./Background.mp4" type="video/mp4">
+</video>
+
+<div class="background-overlay"></div>
+<div class="grain"></div>
+
+<!-- INTRO -->
+<div class="intro" id="intro">
+    <div class="intro-content">
+        <div class="intro-mark">PERSONAL WEBSITE</div>
+        <h1 class="intro-title">NOEL BIO</h1>
+        <div class="intro-hint">Click to enter</div>
+
+        <button class="start-btn" id="enterBtn">Enter<span>↗</span>
+        </button>
+    </div>
+</div>
+
+<header class="topbar">
+    <div class="brand">NOEL<span></span></div>
+
+    <div class="top-status">
+        <span class="live-dot"></span>
+        PERSONAL BIO
+    </div>
+</header>
+
+<main class="main">
+    <section class="bio-card">
+
+        <div class="eyebrow">Personal Profile</div>
+
+        <!-- AVATAR DO ROBLOX -->
+        <a
+            class="avatar-link"
+            id="avatarProfileLink"
+            href="https://www.roblox.com/search/users?keyword=PCgamerbom"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Abrir perfil do Roblox"
+        >
+            <div class="avatar-wrap">
+                <div class="avatar">
+                    <img
+                        id="mainRobloxAvatar"
+                        src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-496FBA5C4B9A7A1D0C93F7A7A5D6B7D2-Png/150/150/AvatarHeadshot/Webp/noFilter"
+                        alt="Avatar do Roblox"
+                    >
+                </div>
+            </div>
+        </a>
+
+        <!-- STATUS ABAIXO DO AVATAR -->
+        <div class="presence" id="mainRobloxPresence">
+            <span class="presence-dot"></span>
+            <span id="mainPresenceText">Carregando status...</span>
+        </div>
+
+        <h1 class="name">NOEL<span></span></h1>
+
+        <p class="tagline">
+            UGC Creator · Builder · Modeler.
+        </p>
+
+        <div class="divider"></div>
+
+        <!-- REDES SOCIAIS -->
+        <div class="socials">
+
+            <a
+                class="social"
+                id="robloxLink"
+                href="https://www.roblox.com/users/2281180949/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M5.164 0 0 18.836 18.836 24 24 5.164 5.164 0Zm8.3 14.025-3.49-.956.956-3.49 3.49.956-.956 3.49Z"/>
+                </svg>
+
+                <span class="social-text">
+                    Roblox
+                    <small>@PCgamerbom</small>
+                </span>
+            </a>
+
+            <a
+                class="social"
+                href="https://discord.com/users/noel6956"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19.73 5.12A19.3 19.3 0 0 0 14.98 3.6l-.58 1.18a17.9 17.9 0 0 0-4.8 0L9.02 3.6a19.2 19.2 0 0 0-4.75 1.52C1.26 9.55.45 13.88.85 18.15a19.4 19.4 0 0 0 5.82 2.94l1.26-2.05a12.6 12.6 0 0 1-1.98-.96l.49-.38c3.81 1.78 7.95 1.78 11.72 0l.5.38c-.64.38-1.3.7-1.99.96l1.26 2.05a19.4 19.4 0 0 0 5.82-2.94c.48-4.95-.82-9.24-4.02-13.03ZM8.4 14.98c-1.13 0-2.06-1.03-2.06-2.3s.9-2.3 2.06-2.3c1.15 0 2.08 1.04 2.06 2.3 0 1.27-.91 2.3-2.06 2.3Zm7.2 0c-1.13 0-2.06-1.03-2.06-2.3s.9-2.3 2.06-2.3c1.15 0 2.08 1.04 2.06 2.3 0 1.27-.9 2.3-2.06 2.3Z"/>
+                </svg>
+
+                <span class="social-text">
+                    Discord
+                    <small>noel6956</small>
+                </span>
+            </a>
+
+        </div>
+
+        <!-- PLAYER DE UMA MÚSICA -->
+        <div class="player">
+
+            <button
+                class="play-btn"
+                id="playBtn"
+                aria-label="Reproduzir música"
+            >
+                <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+
+            <div class="track">
+                <div class="track-title">Late Night (Slowed)</div>
+                <div class="track-sub" id="trackSub">Click to play</div>
+
+                <div class="timeline">
+                    <span class="time" id="currentTime">0:00</span>
+
+                    <div class="progress">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+
+                    <span class="time" id="duration">0:00</span>
+                </div>
+            </div>
+
+            <input
+                class="volume"
+                id="volume"
+                type="range"
+                min="0"
+                max="1"
+                step=".01"
+                value=".5"
+                aria-label="Volume da música"
+            >
+
+        </div>
+
+        <audio id="music" preload="metadata" loop>
+            <source src="./music.mp3" type="audio/mpeg">
+        </audio>
+
+    </section>
+</main>
+
+<footer class="footer">
+    MADE BY <span>NOEL</span> · 2026
+</footer>
+
+<!-- CONFIGURAÇÕES -->
+<button
+    class="settings-toggle"
+    id="settingsToggle"
+    aria-label="Personalizar site"
+    title="Personalizar"
+>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.6" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.09-.02a1.7 1.7 0 0 0-1.7.65l-.05.08h-3.4l-.04-.08a1.7 1.7 0 0 0-1.7-.65l-.09.02-1.7-2.94.06-.06A1.7 1.7 0 0 0 9.7 15l-.09-.04v-3.4L9.7 11.5a1.7 1.7 0 0 0-.34-1.88L9.3 9.56l1.7-2.94.09.02a1.7 1.7 0 0 0 1.7-.65l.04-.08h3.4l.05.08a1.7 1.7 0 0 0 1.7.65l.09-.02 1.7 2.94-.06.06a1.7 1.7 0 0 0-.34 1.88l.09.04v3.4z"
+              transform="translate(-2 -2) scale(1.17)"/>
+    </svg>
+</button>
+
+<div class="settings-panel" id="settingsPanel">
+
+    <div class="settings-head">
+        PERSONALIZAR
+        <button class="close-settings" id="closeSettings" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="field">
+        <label>Cor de destaque</label>
+
+        <div class="colors">
+            <button class="swatch active" data-color="#b8ff65"
+                    style="background:#b8ff65" aria-label="Verde"></button>
+
+            <button class="swatch" data-color="#65d8ff"
+                    style="background:#65d8ff" aria-label="Azul"></button>
+
+            <button class="swatch" data-color="#ff658a"
+                    style="background:#ff658a" aria-label="Rosa"></button>
+
+            <button class="swatch" data-color="#b18aff"
+                    style="background:#b18aff" aria-label="Roxo"></button>
+
+            <button class="swatch" data-color="#ffbd65"
+                    style="background:#ffbd65" aria-label="Laranja"></button>
+
+            <button class="swatch" data-color="#ffffff"
+                    style="background:#ffffff" aria-label="Branco"></button>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="customColor">Cor personalizada</label>
+
+        <div class="custom-color">
+            <input type="color" id="customColor" value="#b8ff65">
+            <span style="font-size:11px;color:#999">Escolha uma cor</span>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="backgroundBrightness">Brilho do vídeo</label>
+
+        <input
+            class="range"
+            id="backgroundBrightness"
+            type="range"
+            min="10"
+            max="100"
+            value="42"
+        >
+    </div>
+
+    <button class="reset" id="resetSettings">
+        Restaurar padrão
+    </button>
+
+</div>
+
+<!-- CURSOR -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ==================================
+   VÍDEO DE FUNDO
+================================== */
+
+const backgroundVideo = $("backgroundVideo");
+
+backgroundVideo.muted = true;
+backgroundVideo.loop = true;
+backgroundVideo.playsInline = true;
+
+function playBackground() {
+    backgroundVideo.play().catch(error => {
+        console.warn(
+            "Não foi possível reproduzir Background.mp4. Verifique o arquivo.",
+            error
+        );
+    });
+}
+
+playBackground();
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        playBackground();
+    }
+});
+
+/* ==================================
+   INTRO E INÍCIO DA MÚSICA
+================================== */
+
+const intro = $("intro");
+const music = $("music");
+const playBtn = $("playBtn");
+const playIcon = $("playIcon");
+const trackSub = $("trackSub");
+
+let isPlaying = false;
+
+$("enterBtn").addEventListener("click", async () => {
+    intro.classList.add("hidden");
+
+    playBackground();
+
+    try {
+        await music.play();
+        isPlaying = true;
+        updatePlayer();
+    } catch (error) {
+        trackSub.textContent = "Clique em play para ouvir";
+    }
+});
+
+/* ==================================
+   PLAYER DE MÚSICA
+================================== */
+
+function updatePlayer() {
+    if (isPlaying) {
+        playIcon.innerHTML = '<path d="M6 5h4v14H6z M14 5h4v14h-4z"/>';
+        playBtn.setAttribute("aria-label", "Pausar música");
+        trackSub.textContent = "Now playing";
+    } else {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        playBtn.setAttribute("aria-label", "Reproduzir música");
+        trackSub.textContent = "Click to play";
+    }
+}
+
+playBtn.addEventListener("click", async () => {
+    if (music.paused) {
+        try {
+            await music.play();
+            isPlaying = true;
+        } catch (error) {
+            trackSub.textContent = "Não foi possível carregar music.mp3";
+        }
+    } else {
+        music.pause();
+        isPlaying = false;
+    }
+
+    updatePlayer();
+});
+
+music.addEventListener("play", () => {
+    isPlaying = true;
+    updatePlayer();
+});
+
+music.addEventListener("pause", () => {
+    isPlaying = false;
+    updatePlayer();
+});
+
+music.addEventListener("timeupdate", () => {
+    const current = music.currentTime || 0;
+    const total = music.duration || 0;
+
+    $("currentTime").textContent = formatTime(current);
+    $("duration").textContent = formatTime(total);
+
+    const percentage = total ? (current / total) * 100 : 0;
+    $("progressFill").style.width = percentage + "%";
+});
+
+music.addEventListener("error", () => {
+    trackSub.textContent = "Verifique o arquivo music.mp3";
+});
+
+$("volume").addEventListener("input", event => {
+    music.volume = Number(event.target.value);
+});
+
+music.volume = 0.5;
+
+function formatTime(seconds) {
+    if (!Number.isFinite(seconds)) return "0:00";
+
+    const minutes = Math.floor(seconds / 60);
+    const remaining = Math.floor(seconds % 60);
+
+    return minutes + ":" + String(remaining).padStart(2, "0");
+}
+
+/* ==================================
+   AVATAR E STATUS DO ROBLOX
+================================== */
+
+/*
+   O endpoint /api/roblox precisa existir no servidor para fornecer
+   o avatar e o status real.
+
+   Formato esperado:
+   {
+     "user": {
+       "id": 123456,
+       "name": "PCgamerbom",
+       "displayName": "PCgamerbom",
+       "avatarUrl": "https://..."
+     },
+     "presence": {
+       "userPresenceType": 1
+     }
+   }
+
+   userPresenceType:
+   0 = Offline
+   1 = Online
+   2 = In game
+   3 = In Studio
+*/
+
+async function loadRobloxProfile() {
+    const presence = $("mainRobloxPresence");
+    const statusText = $("mainPresenceText");
+    const avatar = $("mainRobloxAvatar");
+
+    try {
+        const response = await fetch(
+            "/api/roblox?username=PCgamerbom",
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error("O servidor Roblox retornou " + response.status);
+        }
+
+        const data = await response.json();
+
+        if (!data.user || !data.user.id) {
+            throw new Error("Perfil do Roblox não encontrado");
+        }
+
+        const user = data.user;
+
+        if (user.avatarUrl) {
+            avatar.src = user.avatarUrl;
+        } else {
+            avatar.src =
+                "https://www.roblox.com/headshot-thumbnail/image?userId=" +
+                encodeURIComponent(user.id) +
+                "&width=150&height=150&format=png";
+        }
+
+        const profileUrl =
+            "https://www.roblox.com/users/" +
+            encodeURIComponent(user.id) +
+            "/profile";
+
+        $("avatarProfileLink").href = profileUrl;
+        $("robloxLink").href = profileUrl;
+
+        const status = data.presence;
+
+        presence.classList.remove("online", "in-game");
+
+        if (!status || status.userPresenceType === undefined) {
+            statusText.textContent = "Status indisponível";
+            return;
+        }
+
+        switch (status.userPresenceType) {
+            case 0:
+                statusText.textContent = "Offline";
+                break;
+
+            case 1:
+                presence.classList.add("online");
+                statusText.textContent = "Online";
+                break;
+
+            case 2:
+                presence.classList.add("in-game");
+                statusText.textContent = "In-game";
+                break;
+
+            case 3:
+                presence.classList.add("in-game");
+                statusText.textContent = "In Studio";
+                break;
+
+            default:
+                statusText.textContent = "Status indisponível";
+        }
+
+    } catch (error) {
+        /*
+           Não inventa um status quando o serviço não responde.
+           Mantém o link do perfil disponível.
+        */
+        statusText.textContent = "Status indisponível";
+        presence.classList.remove("online", "in-game");
+
+        console.warn(
+            "O status do Roblox precisa do endpoint /api/roblox:",
+            error
+        );
+    }
+}
+
+loadRobloxProfile();
+
+/* ==================================
+   PERSONALIZAÇÃO DE CORES
+================================== */
+
+const swatches = document.querySelectorAll(".swatch");
+
+function setAccent(color) {
+    document.documentElement.style.setProperty("--accent", color);
+
+    $("customColor").value = color;
+
+    swatches.forEach(button => {
+        button.classList.toggle(
+            "active",
+            button.dataset.color.toLowerCase() === color.toLowerCase()
+        );
+    });
+
+    try {
+        localStorage.setItem("bioAccent", color);
+    } catch (_) {}
+}
+
+swatches.forEach(button => {
+    button.addEventListener("click", () => {
+        setAccent(button.dataset.color);
+    });
+});
+
+$("customColor").addEventListener("input", event => {
+    setAccent(event.target.value);
+});
+
+$("backgroundBrightness").addEventListener("input", event => {
+    const brightness = Number(event.target.value) / 100;
+
+    backgroundVideo.style.filter =
+        `brightness(${brightness}) saturate(.85)`;
+});
+
+$("settingsToggle").addEventListener("click", () => {
+    $("settingsPanel").classList.toggle("open");
+});
+
+$("closeSettings").addEventListener("click", () => {
+    $("settingsPanel").classList.remove("open");
+});
+
+$("resetSettings").addEventListener("click", () => {
+    setAccent("#b8ff65");
+    $("backgroundBrightness").value = 42;
+    backgroundVideo.style.filter = "brightness(.42) saturate(.85)";
+});
+
+try {
+    const savedAccent = localStorage.getItem("bioAccent");
+
+    if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
+        setAccent(savedAccent);
+    }
+} catch (_) {}
+
+/* ==================================
+   CURSOR PERSONALIZADO
+================================== */
+
+const cursorDot = $("cursorDot");
+const cursorRing = $("cursorRing");
+
+if (window.matchMedia("(pointer: fine)").matches) {
+    let mouseX = 0;
+    let mouseY = 0;
+    let ringX = 0;
+    let ringY = 0;
+
+    document.addEventListener("mousemove", event => {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+
+        cursorDot.style.left = mouseX + "px";
+        cursorDot.style.top = mouseY + "px";
+    });
+
+    function animateCursor() {
+        ringX += (mouseX - ringX) * 0.15;
+        ringY += (mouseY - ringY) * 0.15;
+
+        cursorRing.style.left = ringX + "px";
+        cursorRing.style.top = ringY + "px";
+
+        requestAnimationFrame(animateCursor);
+    }
+
+    animateCursor();
+
+    document.querySelectorAll("a, button, input").forEach(element => {
+        element.addEventListener("mouseenter", () => {
+            cursorRing.classList.add("hover");
+        });
+
+        element.addEventListener("mouseleave", () => {
+            cursorRing.classList.remove("hover");
+        });
+    });
+}
+</script>
+
+</body>
+</html>

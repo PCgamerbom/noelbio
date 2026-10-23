@@ -1,0 +1,39 @@
+**NOEL.SPACE — Personal Bio Website**
+
+A modern and customizable personal bio website featuring an animated glassmorphism design, a looping video background, a music player, and animated borders.
+
+**Features**
+- Animated interface with smooth transitions and visual effects.
+- Customizable accent colors and background brightness.
+- Background video with loop support.
+- Music player using a local MP3 file.
+- Roblox profile integration with avatar and online status, when the API is available.
+- Social links for Roblox and Discord.MIT License
+
+Copyright (c) 2026 NOEL
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+- Custom cursor and responsive layout for desktop and mobile.
+
+**Requirements**
+- `index.html` — Main website.
+- `Background.mp4` — Background video.
+- `music.mp3` — Music file.
+
+Created by NOEL. Designed for a personalized and immersive browsing experience.
