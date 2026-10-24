@@ -1,111 +1,96 @@
-export default async function handler(req, res) {
-    if (req.method !== "GET") {
-        return res.status(405).json({
-            error: "Method not allowed"
-        });
+export async function onRequestGet({ request }) {
+  const corsHeaders = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store"
+  };
+
+  try {
+    const url = new URL(request.url);
+    const username = url.searchParams.get("username") || "PCgamerbom";
+
+    // 1. Encontrar o usuário pelo nome
+    const userResponse = await fetch(
+      "https://users.roblox.com/v1/usernames/users",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          usernames: [username],
+          excludeBannedUsers: true
+        })
+      }
+    );
+
+    if (!userResponse.ok) {
+      throw new Error("Não foi possível consultar os usuários do Roblox.");
     }
 
-    const username = String(
-        req.query.username || "PCgamerbom"
-    ).trim();
+    const userData = await userResponse.json();
+    const user = userData.data?.[0];
 
-    if (!username || username.length > 20) {
-        return res.status(400).json({
-            error: "Invalid username"
-        });
+    if (!user) {
+      return Response.json(
+        { error: "Usuário do Roblox não encontrado." },
+        { status: 404, headers: corsHeaders }
+      );
     }
 
-    try {
-        // Find the Roblox user by username
-        const userResponse = await fetch(
-            "https://users.roblox.com/v1/usernames/users",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    usernames: [username],
-                    excludeBannedUsers: false
-                })
-            }
-        );
+    // 2. Buscar o avatar
+    const avatarResponse = await fetch(
+      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
+    );
 
-        if (!userResponse.ok) {
-            throw new Error("Roblox user lookup failed");
-        }
+    let avatarUrl = null;
 
-        const userData = await userResponse.json();
-        const user = userData.data?.[0];
-
-        if (!user) {
-            return res.status(404).json({
-                error: "Roblox user not found"
-            });
-        }
-
-        // Get the user's avatar thumbnail
-        let avatarUrl = null;
-
-        try {
-            const avatarResponse = await fetch(
-                `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
-            );
-
-            if (avatarResponse.ok) {
-                const avatarData = await avatarResponse.json();
-                avatarUrl = avatarData.data?.[0]?.imageUrl || null;
-            }
-        } catch (error) {
-            console.error("Avatar lookup failed:", error);
-        }
-
-        // Get public Roblox presence
-        let presence = null;
-
-        try {
-            const presenceResponse = await fetch(
-                "https://presence.roblox.com/v1/presence/users",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        userIds: [user.id]
-                    })
-                }
-            );
-
-            if (presenceResponse.ok) {
-                const presenceData = await presenceResponse.json();
-                presence = presenceData.userPresences?.[0] || null;
-            }
-        } catch (error) {
-            console.error("Presence lookup failed:", error);
-        }
-
-        // Return only the public profile information needed by the site
-        res.setHeader(
-            "Cache-Control",
-            "public, s-maxage=30, stale-while-revalidate=60"
-        );
-
-        return res.status(200).json({
-            user: {
-                id: user.id,
-                name: user.name,
-                displayName: user.displayName,
-                avatarUrl
-            },
-            presence
-        });
-
-    } catch (error) {
-        console.error("Roblox API error:", error);
-
-        return res.status(502).json({
-            error: "Unable to retrieve Roblox profile data"
-        });
+    if (avatarResponse.ok) {
+      const avatarData = await avatarResponse.json();
+      avatarUrl = avatarData.data?.[0]?.imageUrl || null;
     }
+
+    // 3. Consultar a presença do usuário
+    const presenceResponse = await fetch(
+      "https://presence.roblox.com/v1/presence/users",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userIds: [user.id]
+        })
+      }
+    );
+
+    let presence = null;
+
+    if (presenceResponse.ok) {
+      const presenceData = await presenceResponse.json();
+      presence = presenceData.userPresences?.[0] || null;
+    }
+
+    // 4. Retornar os dados para o site
+    return Response.json(
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          displayName: user.displayName,
+          avatarUrl
+        },
+        presence
+      },
+      { headers: corsHeaders }
+    );
+
+  } catch (error) {
+    return Response.json(
+      {
+        error: "Erro ao consultar a API do Roblox.",
+        details: error.message
+      },
+      { status: 502, headers: corsHeaders }
+    );
+  }
 }
