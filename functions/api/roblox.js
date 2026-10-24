@@ -1,134 +1,195 @@
-const JSON_HEADERS = {
-  "Content-Type": "application/json; charset=utf-8",
-  "Cache-Control": "no-store",
-};
+const USER_ID = "2281180949";
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: JSON_HEADERS,
-  });
-}
+async function fetchJson(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-// Retry com backoff exponencial para 429/5xx
-async function robloxFetch(url, options = {}, retries = 3) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  try {
     const response = await fetch(url, {
       ...options,
       headers: {
         Accept: "application/json",
-        User-Agent: "NOEL-SPACE-Bio",
-        ...options.headers,
+        ...(options.headers || {}),
       },
+      signal: controller.signal,
     });
 
-    if (response.ok) return response.json();
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    const rawText = await response.text();
 
-    // 429 (rate limit) ou 5xx → retry com backoff
-    if (response.status === 429 || response.status >= 500) {
-      if (attempt < retries) {
-        const delay = Math.pow(2, attempt) * 500 + Math.random() * 200;
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
+    let payload;
+    if (rawText) {
+      try {
+        payload = JSON.parse(rawText);
+      } catch {
+        payload = null;
       }
     }
 
-    throw new Error(`Roblox API respondeu HTTP ${response.status}`);
+    if (!response.ok) {
+      const message = payload && typeof payload === "object" && payload.error
+        ? String(payload.error)
+        : rawText && rawText.length < 300
+          ? rawText.trim()
+          : `Roblox respondeu HTTP ${response.status}`;
+
+      throw new Error(message);
+    }
+
+    if (
+      rawText &&
+      payload === null &&
+      !contentType.includes("application/json") &&
+      !contentType.includes("+json")
+    ) {
+      throw new Error("Resposta da API do Roblox não foi JSON válido.");
+    }
+
+    return payload ?? {};
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-export async function onRequestGet({ request, env, ctx }) {
-  const url = new URL(request.url);
-  const username = url.searchParams.get("username") || "PCgamerbom";
+function normalizeStatus(type) {
+  const value = Number(type || 0);
+  const map = {
+    0: "Offline",
+    1: "Online",
+    2: "Em um jogo",
+    3: "No Roblox Studio",
+  };
+  return map[value] || "Status desconhecido";
+}
 
-  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-    return json({ error: "Nome de usuário inválido." }, 400);
-  }
+async function getProfile() {
+  const profileResponse = await fetchJson(`https://users.roblox.com/v1/users/${USER_ID}`);
 
-  // --- CACHE: evita chamar o Roblox a cada request ---
-  const cacheKey = `roblox-profile-${username.toLowerCase()}`;
-  const cache = caches.default;
-
-  const cached = await cache.match(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  const user = profileResponse && typeof profileResponse === "object" ? profileResponse : {};
+  let presenceType = 0;
+  let status = "Offline";
+  let game = null;
+  let groups = [];
+  let avatar = null;
 
   try {
-    // 1. Lookup por username
-    const usersData = await robloxFetch(
-      "https://users.roblox.com/v1/usernames/users",
+    const presenceResponse = await fetchJson(
+      "https://presence.roblox.com/v1/presence/users",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false,
-        }),
+        body: JSON.stringify({ userIds: [Number(USER_ID)] }),
       }
     );
 
-    const user = usersData.data?.[0];
-    if (!user) {
-      return json({ error: `Usuário "${username}" não encontrado.` }, 404);
+    const p = presenceResponse?.userPresences?.[0];
+
+    if (p) {
+      presenceType = Number(p.userPresenceType || 0);
+      status = normalizeStatus(presenceType);
+
+      if (presenceType === 2 && p.placeId) {
+        try {
+          const place = await fetchJson(
+            `https://apis.roblox.com/universes/v1/places/${p.placeId}/universe`
+          );
+
+          if (place && place.universeId) {
+            const details = await fetchJson(
+              `https://games.roblox.com/v1/games?universeIds=${place.universeId}`
+            );
+
+            const g = details?.data?.[0];
+
+            if (g) {
+              game = {
+                name: g.name || "Jogo do Roblox",
+                creatorName: g.creator?.name || "Desconhecido",
+                creatorType: g.creator?.type || "",
+                playing: Number.isFinite(g.playing) ? g.playing : null,
+                visits: Number.isFinite(g.visits) ? g.visits : null,
+                url: `https://www.roblox.com/games/${p.placeId}`,
+                image: null,
+              };
+
+              try {
+                const thumbs = await fetchJson(
+                  `https://thumbnails.roblox.com/v1/games/icons?universeIds=${place.universeId}&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false`
+                );
+                game.image = thumbs?.data?.[0]?.imageUrl || null;
+              } catch {}
+            }
+          }
+        } catch {}
+      }
     }
+  } catch {}
 
-    // 2. Thumbnail do avatar
-    let avatarUrl = null;
-    try {
-      const thumbnails = await robloxFetch(
-        `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=false`
-      );
-      avatarUrl = thumbnails.data?.[0]?.imageUrl || null;
-    } catch (e) {
-      console.error("Erro ao buscar avatar:", e.message);
-    }
-
-    // 3. Presença
-    let presence = null;
-    let presenceError = null;
-    try {
-      const presenceData = await robloxFetch(
-        "https://presence.roblox.com/v1/presence/users",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userIds: [user.id] }),
-        }
-      );
-      presence = presenceData.userPresences?.[0] || null;
-    } catch (e) {
-      presenceError = e.message;
-    }
-
-    const body = {
-      user: {
-        id: user.id,
-        name: user.name,
-        displayName: user.displayName,
-        avatarUrl,
-      },
-      presence,
-      presenceError,
-    };
-
-    const response = json(body);
-
-    // Cache por 5 minutos (presença pode mudar, mas evita 429)
-    const cacheTtl = 5 * 60; // 5 min
-    ctx.waitUntil(
-      cache.put(cacheKey, response.clone(), {
-        // Cache API do Cloudflare usa "ttl" via Cache-Control no response
-        // Alternativa: usar KV se precisar de TTL mais preciso
-      })
+  try {
+    const roleData = await fetchJson(
+      `https://groups.roblox.com/v1/users/${USER_ID}/groups/roles`
     );
 
-    return response;
-  } catch (error) {
-    console.error("Erro na função Roblox:", error);
-    return json(
-      { error: "Não foi possível consultar a API do Roblox.", details: error.message },
-      502
+    groups = (roleData?.data || [])
+      .filter(
+        (item) =>
+          item?.role?.rank === 255 || /owner|dono/i.test(item?.role?.name || "")
+      )
+      .map((item) => ({
+        name: item?.group?.name || "Grupo do Roblox",
+        description: item?.group?.description || "",
+        memberCount: Number.isFinite(item?.group?.memberCount)
+          ? item.group.memberCount
+          : null,
+        url: `https://www.roblox.com/communities/${item?.group?.id || ""}`,
+      }));
+  } catch {}
+
+  try {
+    const thumb = await fetchJson(
+      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${USER_ID}&size=420x420&format=Png&isCircular=false`
+    );
+    avatar = thumb?.data?.[0]?.imageUrl || null;
+  } catch {}
+
+  return {
+    id: USER_ID,
+    username: user.name || "PCgamerbom",
+    displayName: user.displayName || user.name || "Noelzin",
+    profileUrl: `https://www.roblox.com/users/${USER_ID}/profile`,
+    created: user.created || null,
+    avatar,
+    presenceType,
+    status,
+    game,
+    groups,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function onRequest(context) {
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+  };
+
+  if (context.request.method !== "GET") {
+    return new Response(
+      JSON.stringify({ error: "Método não permitido." }),
+      { status: 405, headers: { ...headers, Allow: "GET" } }
     );
   }
-}   
+
+  try {
+    const profile = await getProfile();
+    return new Response(JSON.stringify(profile), { status: 200, headers });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: "Não foi possível consultar a API pública do Roblox.",
+        details: String(error?.message || error),
+      }),
+      { status: 502, headers }
+    );
+  }
+}
