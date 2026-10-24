@@ -159,29 +159,20 @@ button {
     animation: appear .9s ease both;
 }
 
-/* BORDA ANIMADA DO CARD */
+/* BORDA ESTÁTICA DO CARD */
 .bio-card::before {
     content: "";
     position: absolute;
     inset: 0;
     padding: 1px;
     border-radius: inherit;
-    background: conic-gradient(
-        from var(--angle, 0deg),
-        transparent 0%,
-        transparent 35%,
-        var(--accent) 48%,
-        rgba(255,255,255,.25) 52%,
-        transparent 65%,
-        transparent 100%
-    );
+    background: linear-gradient(135deg, rgba(255,255,255,.2), var(--accent), rgba(255,255,255,.05));
     -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    animation: borderSpin 6s linear infinite;
     z-index: 2;
 }
 
@@ -232,17 +223,14 @@ button {
     z-index: 2;
 }
 
-/* AVATAR ROBLOX (PARADO - SEM ANIMAÇÃO DE ROTAÇÃO) */
+/* AVATAR ROBLOX (NÃO CLICÁVEL) */
 .avatar-container {
     position: relative;
     display: inline-block;
     margin-top: 24px;
     z-index: 2;
-}
-
-.avatar-link {
-    display: inline-block;
-    text-decoration: none;
+    pointer-events: none; /* BLOQUEIA QUALQUER INTERAÇÃO */
+    user-select: none;
 }
 
 .avatar-wrap {
@@ -250,13 +238,7 @@ button {
     height: 112px;
     padding: 3px;
     border-radius: 50%;
-    /* Borda estática com gradiente */
     background: linear-gradient(135deg, var(--accent), rgba(255,255,255,.2), var(--accent));
-    transition: transform .3s ease;
-}
-
-.avatar-link:hover .avatar-wrap {
-    transform: scale(1.06);
 }
 
 .avatar {
@@ -293,7 +275,6 @@ button {
     color: #ccc;
     backdrop-filter: blur(8px);
     pointer-events: none;
-    user-select: none;
 }
 
 .refresh-indicator.spinning svg {
@@ -756,10 +737,6 @@ button {
 }
 
 /* ANIMAÇÕES */
-@keyframes borderSpin {
-    to { transform: rotate(360deg); }
-}
-
 @keyframes appear {
     from {
         opacity: 0;
@@ -841,26 +818,17 @@ button {
 
         <div class="eyebrow">Personal Profile</div>
 
-        <!-- AVATAR DO ROBLOX (PARADO - SEM GIRO) -->
+        <!-- AVATAR DO ROBLOX (COMPLETAMENTE NÃO CLICÁVEL) -->
         <div class="avatar-container">
-            <a
-                class="avatar-link"
-                id="avatarProfileLink"
-                href="https://www.roblox.com/users/2281180949/profile"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Abrir perfil do Roblox"
-            >
-                <div class="avatar-wrap">
-                    <div class="avatar">
-                        <img
-                            id="mainRobloxAvatar"
-                            src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-189A55C3130855975A548C61808EF1ED-Png/420/420/AvatarHeadshot/Png/noFilter"
-                            alt="Avatar do Roblox"
-                        >
-                    </div>
+            <div class="avatar-wrap">
+                <div class="avatar">
+                    <img
+                        id="mainRobloxAvatar"
+                        src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-189A55C3130855975A548C61808EF1ED-Png/420/420/AvatarHeadshot/Png/noFilter"
+                        alt="Avatar do Roblox"
+                    >
                 </div>
-            </a>
+            </div>
 
             <!-- INDICADOR VISUAL NÃO CLICÁVEL -->
             <div class="refresh-indicator" id="refreshProfile" title="Sincronização do Perfil">
@@ -1034,18 +1002,16 @@ function createShootingStars() {
     const container = $("starsContainer");
     if (!container) return;
     
-    const starCount = 8; // Quantidade de estrelas cadentes simultâneas
+    const starCount = 8;
 
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement("div");
         star.classList.add("shooting-star");
         
-        // Posição aleatória na parte superior/direita do card
         star.style.top = Math.random() * 40 - 20 + "%";
         star.style.left = Math.random() * 100 + 10 + "%";
         
-        // Duração e atraso aleatórios para desincronizar
-        const duration = Math.random() * 2.5 + 2; // entre 2s e 4.5s
+        const duration = Math.random() * 2.5 + 2;
         const delay = Math.random() * 4;
         
         star.style.animationDuration = duration + "s";
@@ -1066,19 +1032,17 @@ let isDeleting = false;
 function typeWriterEffect() {
     const currentText = word.substring(0, charIndex);
     
-    // Atualiza o Título da Aba
     document.title = currentText || "N";
     
-    // Atualiza a marca no cabeçalho
     const brand = $("brandText");
     if (brand) {
         brand.innerHTML = (currentText || "N") + "<span>.SPACE</span>";
     }
 
-    let typeSpeed = 220; // Velocidade lenta digitando
+    let typeSpeed = 220;
 
     if (isDeleting) {
-        typeSpeed = 160; // Velocidade lenta apagando
+        typeSpeed = 160;
         charIndex--;
     } else {
         charIndex++;
@@ -1086,16 +1050,15 @@ function typeWriterEffect() {
 
     if (!isDeleting && charIndex === word.length + 1) {
         isDeleting = true;
-        typeSpeed = 2200; // Pausa quando o nome estiver totalmente escrito
+        typeSpeed = 2200;
     } else if (isDeleting && charIndex === 0) {
         isDeleting = false;
-        typeSpeed = 800; // Pausa antes de recomeçar a digitar
+        typeSpeed = 800;
     }
 
     setTimeout(typeWriterEffect, typeSpeed);
 }
 
-// Inicia a animação ao carregar a página
 typeWriterEffect();
 
 /* ==================================
@@ -1216,7 +1179,6 @@ async function loadRobloxProfile() {
     const statusText = $("mainPresenceText");
     const avatar = $("mainRobloxAvatar");
     const indicator = $("refreshProfile");
-    const profileLink = $("avatarProfileLink");
 
     if (indicator) indicator.classList.add("spinning");
 
@@ -1229,19 +1191,12 @@ async function loadRobloxProfile() {
 
         const data = await response.json();
 
-        // Atualiza a foto do avatar
         if (data.avatar && avatar) {
             avatar.src = data.avatar;
         }
 
-        // Atualiza o link do perfil
-        if (data.profileUrl && profileLink) {
-            profileLink.href = data.profileUrl;
-        }
-
-        // Atualiza o status (Online / Offline / Jogando)
         if (statusText && presence) {
-            presence.className = "presence"; // Reseta classes
+            presence.className = "presence";
             if (data.presenceType === 1) {
                 presence.classList.add("online");
                 statusText.textContent = "Online no Roblox";
