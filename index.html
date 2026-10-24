@@ -1074,47 +1074,34 @@ const $ = id => document.getElementById(id);
 /* ==================================
    VÍDEO DE FUNDO
 ================================== */
-
 const backgroundVideo = $("backgroundVideo");
-
 backgroundVideo.muted = true;
 backgroundVideo.loop = true;
 backgroundVideo.playsInline = true;
 
 function playBackground() {
     backgroundVideo.play().catch(error => {
-        console.warn(
-            "Não foi possível reproduzir Background.mp4. Verifique o arquivo.",
-            error
-        );
+        console.warn("Não foi possível reproduzir o vídeo de fundo.", error);
     });
 }
-
 playBackground();
-
 document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-        playBackground();
-    }
+    if (!document.hidden) playBackground();
 });
 
 /* ==================================
    INTRO E INÍCIO DA MÚSICA
 ================================== */
-
 const intro = $("intro");
 const music = $("music");
 const playBtn = $("playBtn");
 const playIcon = $("playIcon");
 const trackSub = $("trackSub");
-
 let isPlaying = false;
 
 $("enterBtn").addEventListener("click", async () => {
     intro.classList.add("hidden");
-
     playBackground();
-
     try {
         await music.play();
         isPlaying = true;
@@ -1127,7 +1114,6 @@ $("enterBtn").addEventListener("click", async () => {
 /* ==================================
    PLAYER DE MÚSICA
 ================================== */
-
 function updatePlayer() {
     if (isPlaying) {
         playIcon.innerHTML = '<path d="M6 5h4v14H6z M14 5h4v14h-4z"/>';
@@ -1146,262 +1132,162 @@ playBtn.addEventListener("click", async () => {
             await music.play();
             isPlaying = true;
         } catch (error) {
-            trackSub.textContent = "Não foi possível carregar music.mp3";
+            trackSub.textContent = "Erro ao reproduzir música";
         }
     } else {
         music.pause();
         isPlaying = false;
     }
-
     updatePlayer();
 });
 
-music.addEventListener("play", () => {
-    isPlaying = true;
-    updatePlayer();
-});
-
-music.addEventListener("pause", () => {
-    isPlaying = false;
-    updatePlayer();
-});
-
+music.addEventListener("play", () => { isPlaying = true; updatePlayer(); });
+music.addEventListener("pause", () => { isPlaying = false; updatePlayer(); });
 music.addEventListener("timeupdate", () => {
     const current = music.currentTime || 0;
     const total = music.duration || 0;
-
     $("currentTime").textContent = formatTime(current);
     $("duration").textContent = formatTime(total);
-
     const percentage = total ? (current / total) * 100 : 0;
     $("progressFill").style.width = percentage + "%";
-});
-
-music.addEventListener("error", () => {
-    trackSub.textContent = "Verifique o arquivo music.mp3";
 });
 
 $("volume").addEventListener("input", event => {
     music.volume = Number(event.target.value);
 });
-
 music.volume = 0.5;
 
 function formatTime(seconds) {
     if (!Number.isFinite(seconds)) return "0:00";
-
     const minutes = Math.floor(seconds / 60);
     const remaining = Math.floor(seconds % 60);
-
     return minutes + ":" + String(remaining).padStart(2, "0");
 }
 
 /* ==================================
    AVATAR E STATUS DO ROBLOX
 ================================== */
-
-let refreshTimer = null;
-const REFRESH_INTERVAL = 60_000; // 60s
-
 async function loadRobloxProfile() {
-    const presence = $("mainRobloxPresence");
+    const presenceEl = $("mainRobloxPresence");
     const statusText = $("mainPresenceText");
-    const avatar = $("mainRobloxAvatar");
+    const avatarImg = $("mainRobloxAvatar");
     const btn = $("refreshProfile");
+    const profileLink = $("avatarProfileLink");
 
-    btn.classList.add("spinning");
+    if (btn) btn.classList.add("spinning");
 
     try {
-        const response = await fetch(
-            "/api/roblox?username=PCgamerbom",
-            { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-            throw new Error("O servidor Roblox retornou " + response.status);
-        }
+        // Faz a requisição para a sua Serverless Function do Cloudflare (onRequest)
+        const response = await fetch("/api/roblox", { cache: "no-store" });
+        if (!response.ok) throw new Error("Erro ao buscar dados da API (" + response.status + ")");
 
         const data = await response.json();
 
-        if (!data.user || !data.user.id) {
-            throw new Error("Perfil do Roblox não encontrado");
+        // Atualiza o link do perfil com o ID correto obtido da API
+        if (data.profileUrl && profileLink) {
+            profileLink.href = data.profileUrl;
         }
 
-        const user = data.user;
-
-        if (user.avatarUrl) {
-            avatar.src = user.avatarUrl;
-        } else {
-            avatar.src =
-                "https://www.roblox.com/headshot-thumbnail/image?userId=" +
-                encodeURIComponent(user.id) +
-                "&width=150&height=150&format=png";
+        // Atualiza a foto do avatar se estiver disponível
+        if (data.avatar && avatarImg) {
+            avatarImg.src = data.avatar;
         }
 
-        const profileUrl =
-            "https://www.roblox.com/users/" +
-            encodeURIComponent(user.id) +
-            "/profile";
+        // Atualiza o status de presença (Online, Em um jogo, Offline, etc.)
+        if (statusText && presenceEl) {
+            statusText.textContent = data.status || "Offline";
+            presenceEl.className = "presence"; // reseta classes
 
-        $("avatarProfileLink").href = profileUrl;
-        $("robloxLink").href = profileUrl;
-
-        const status = data.presence;
-
-        presence.classList.remove("online", "in-game");
-
-        if (!status || status.userPresenceType === undefined) {
-            statusText.textContent = "Status indisponível";
-            return;
+            if (data.presenceType === 1) {
+                presenceEl.classList.add("online");
+            } else if (data.presenceType === 2 && data.game) {
+                presenceEl.classList.add("in-game");
+                statusText.textContent = data.game.name ? `Jogando: ${data.game.name}` : "Em um jogo";
+            }
         }
-
-        switch (status.userPresenceType) {
-            case 0:
-                statusText.textContent = "Offline";
-                break;
-            case 1:
-                presence.classList.add("online");
-                statusText.textContent = "Online";
-                break;
-            case 2:
-                presence.classList.add("in-game");
-                statusText.textContent = "In-game";
-                break;
-            case 3:
-                presence.classList.add("in-game");
-                statusText.textContent = "In Studio";
-                break;
-            default:
-                statusText.textContent = "Status indisponível";
-        }
-
     } catch (error) {
-        statusText.textContent = "Status indisponível";
-        presence.classList.remove("online", "in-game");
-        console.warn("O status do Roblox precisa do endpoint /api/roblox:", error);
+        console.error("Falha ao carregar perfil do Roblox:", error);
+        if (statusText) statusText.textContent = "Erro ao carregar status";
     } finally {
-        btn.classList.remove("spinning");
+        setTimeout(() => {
+            if (btn) btn.classList.remove("spinning");
+        }, 500);
     }
 }
 
-// Botão manual
-$("refreshProfile").addEventListener("click", loadRobloxProfile);
-
-// Auto-refresh
-function startAutoRefresh() {
-    clearInterval(refreshTimer);
-    refreshTimer = setInterval(loadRobloxProfile, REFRESH_INTERVAL);
-}
-
-// Inicia
+// Carregar ao iniciar e atualizar a cada 60 segundos
 loadRobloxProfile();
-startAutoRefresh();
+setInterval(loadRobloxProfile, 60_000);
+
+// Botão de atualizar manual ao clicar no ícone de refresh
+const refreshBtn = $("refreshProfile");
+if (refreshBtn) {
+    refreshBtn.addEventListener("click", (e) => {
+        e.preventDefault(); // Evita abrir o link do avatar ao clicar no botão
+        loadRobloxProfile();
+    });
+}
 
 /* ==================================
-   PERSONALIZAÇÃO DE CORES
+   PAINEL DE CONFIGURAÇÕES E CORES
 ================================== */
+const settingsToggle = $("settingsToggle");
+const settingsPanel = $("settingsPanel");
+const closeSettings = $("closeSettings");
 
-const swatches = document.querySelectorAll(".swatch");
+settingsToggle.addEventListener("click", () => settingsPanel.classList.toggle("open"));
+closeSettings.addEventListener("click", () => settingsPanel.classList.remove("open"));
 
-function setAccent(color) {
-    document.documentElement.style.setProperty("--accent", color);
-
-    $("customColor").value = color;
-
-    swatches.forEach(button => {
-        button.classList.toggle(
-            "active",
-            button.dataset.color.toLowerCase() === color.toLowerCase()
-        );
-    });
-
-    try {
-        localStorage.setItem("bioAccent", color);
-    } catch (_) {}
-}
-
-swatches.forEach(button => {
-    button.addEventListener("click", () => {
-        setAccent(button.dataset.color);
+// Cores de destaque
+const rootStyle = document.documentElement.style;
+document.querySelectorAll(".swatch").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const color = btn.getAttribute("data-color");
+        rootStyle.setProperty("--accent", color);
+        $("customColor").value = color;
     });
 });
 
-$("customColor").addEventListener("input", event => {
-    setAccent(event.target.value);
+$("customColor").addEventListener("input", (e) => {
+    rootStyle.setProperty("--accent", e.target.value);
+    document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"));
 });
 
-$("backgroundBrightness").addEventListener("input", event => {
-    const brightness = Number(event.target.value) / 100;
-
-    backgroundVideo.style.filter =
-        `brightness(${brightness}) saturate(.85)`;
-});
-
-$("settingsToggle").addEventListener("click", () => {
-    $("settingsPanel").classList.toggle("open");
-});
-
-$("closeSettings").addEventListener("click", () => {
-    $("settingsPanel").classList.remove("open");
+$("backgroundBrightness").addEventListener("input", (e) => {
+    const val = e.target.value / 100;
+    $("backgroundVideo").style.filter = `brightness(${val}) saturate(.85)`;
 });
 
 $("resetSettings").addEventListener("click", () => {
-    setAccent("#b8ff65");
+    rootStyle.setProperty("--accent", "#b8ff65");
+    $("customColor").value = "#b8ff65";
+    $("backgroundVideo").style.filter = "brightness(.42) saturate(.85)";
     $("backgroundBrightness").value = 42;
-    backgroundVideo.style.filter = "brightness(.42) saturate(.85)";
+    document.querySelectorAll(".swatch").forEach((b, idx) => {
+        if (idx === 0) b.classList.add("active");
+        else b.classList.remove("active");
+    });
 });
-
-try {
-    const savedAccent = localStorage.getItem("bioAccent");
-
-    if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
-        setAccent(savedAccent);
-    }
-} catch (_) {}
 
 /* ==================================
    CURSOR PERSONALIZADO
 ================================== */
+const dot = $("cursorDot");
+const ring = $("cursorRing");
 
-const cursorDot = $("cursorDot");
-const cursorRing = $("cursorRing");
+window.addEventListener("mousemove", (e) => {
+    dot.style.left = e.clientX + "px";
+    dot.style.top = e.clientY + "px";
+    ring.style.left = e.clientX + "px";
+    ring.style.top = e.clientY + "px";
+});
 
-if (window.matchMedia("(pointer: fine)").matches) {
-    let mouseX = 0;
-    let mouseY = 0;
-    let ringX = 0;
-    let ringY = 0;
-
-    document.addEventListener("mousemove", event => {
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-
-        cursorDot.style.left = mouseX + "px";
-        cursorDot.style.top = mouseY + "px";
-    });
-
-    function animateCursor() {
-        ringX += (mouseX - ringX) * 0.15;
-        ringY += (mouseY - ringY) * 0.15;
-
-        cursorRing.style.left = ringX + "px";
-        cursorRing.style.top = ringY + "px";
-
-        requestAnimationFrame(animateCursor);
-    }
-
-    animateCursor();
-
-    document.querySelectorAll("a, button, input").forEach(element => {
-        element.addEventListener("mouseenter", () => {
-            cursorRing.classList.add("hover");
-        });
-
-        element.addEventListener("mouseleave", () => {
-            cursorRing.classList.remove("hover");
-        });
-    });
-}
+document.querySelectorAll("a, button, input").forEach(el => {
+    el.addEventListener("mouseenter", () => ring.classList.add("hover"));
+    el.addEventListener("mouseleave", () => ring.classList.remove("hover"));
+});
 </script>
 
 </body>
