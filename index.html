@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#08090d">
 <title>NOEL</title>
 
-<!-- FAVICON OFICIAL DO SEU REPOSITÓRIO GITHUB -->
+<!-- FAVICON OFICIAL DO REPOSITÓRIO GITHUB -->
 <link rel="icon" type="image/png" href="https://github.com/PCgamerbom/noelbio/blob/main/icon.png?raw=true">
 
 <style>
@@ -34,7 +34,7 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     isolation: isolate;
-    perspective: 1000px; /* NECESSÁRIO PARA O EFEITO 3D DO GIROSCÓPIO */
+    perspective: 1000px;
 }
 
 button, a, input {
@@ -69,7 +69,7 @@ button {
     object-fit: cover;
     background: transparent;
     filter: brightness(1) saturate(.85);
-    transition: transform 0.1s ease-out; /* Transição suave do giroscópio no fundo */
+    transition: transform 0.1s ease-out;
 }
 
 .background-overlay {
@@ -160,7 +160,8 @@ button {
     box-shadow: 0 30px 100px rgba(0,0,0,.4);
     animation: appear .9s ease both;
     transform-style: preserve-3d;
-    transition: transform 0.15s ease-out; /* Transição suave de inclinação 3D */
+    transition: transform 0.12s ease-out;
+    will-change: transform;
 }
 
 /* BORDA ESTÁTICA DO CARD */
@@ -995,53 +996,59 @@ button {
 const $ = id => document.getElementById(id);
 
 /* ==================================
-   GIROSCÓPIO & PARALLAX 3D PARA CELULAR
+   GIROSCÓPIO & PARALLAX 3D (CORRIGIDO PARA CLOUDFLARE PAGES)
 ================================== */
 const bioCard = $("bioCard");
 const videoBg = $("backgroundVideo");
+let initialBeta = null;
+let initialGamma = null;
 
-function handleOrientation(event) {
-    // gamma: esquerda/direita (-90 até 90)
-    // beta: frente/trás (-180 até 180)
-    let x = event.gamma; 
-    let y = event.beta;  
+function handleOrientation(e) {
+    let gamma = e.gamma; // Esquerda/Direita
+    let beta = e.beta;   // Frente/Trás
 
-    if (x === null || y === null) return;
+    if (gamma === null || beta === null) return;
 
-    // Trava limites máximos de rotação para ficar suave e elegante
-    x = Math.max(-30, Math.min(30, x));
-    y = Math.max(-30, Math.min(30, y));
+    // Captura a posição inicial do telemóvel ao entrar para servir de centro
+    if (initialBeta === null) initialBeta = beta;
+    if (initialGamma === null) initialGamma = gamma;
 
-    // Calcula os graus de rotação do Card 3D
-    const rotateY = (x / 30) * 12; // até 12 graus
-    const rotateX = -(y / 30) * 12;
+    let deltaGamma = gamma - initialGamma;
+    let deltaBeta = beta - initialBeta;
 
-    // Move o card em 3D
+    // Limita os valores para evitar rotações exageradas
+    deltaGamma = Math.max(-35, Math.min(35, deltaGamma));
+    deltaBeta = Math.max(-35, Math.min(35, deltaBeta));
+
+    const rotateY = (deltaGamma / 35) * 16;
+    const rotateX = -(deltaBeta / 35) * 16;
+
     if (bioCard) {
         bioCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     }
 
-    // Move suavemente o vídeo de fundo no sentido oposto para o efeito de profundidade
     if (videoBg) {
-        const moveX = (x / 30) * 15;
-        const moveY = (y / 30) * 15;
-        videoBg.style.transform = `scale(1.1) translate(${-moveX}px, ${-moveY}px)`;
+        const moveX = (deltaGamma / 35) * 18;
+        const moveY = (deltaBeta / 35) * 18;
+        videoBg.style.transform = `scale(1.15) translate(${-moveX}px, ${-moveY}px)`;
     }
 }
 
-function initGyroscope() {
-    // Para iOS 13+ que exige solicitação de permissão
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-            .then(permissionState => {
-                if (permissionState === 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                }
-            })
-            .catch(console.error);
-    } else if (window.DeviceOrientationEvent) {
-        // Para Android e outros navegadores
-        window.addEventListener('deviceorientation', handleOrientation);
+function enableGyro() {
+    if (typeof DeviceOrientationEvent !== 'undefined') {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // iOS 13+ requer execução direta no clique
+            DeviceOrientationEvent.requestPermission()
+                .then(state => {
+                    if (state === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                    }
+                })
+                .catch(console.error);
+        } else {
+            // Android & navegadores padrão
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        }
     }
 }
 
@@ -1131,7 +1138,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* ==================================
-   INTRO E INÍCIO DA MÚSICA + ATIVAÇÃO DO GIROSCÓPIO
+   INTRO E INÍCIO DA MÚSICA
 ================================== */
 const intro = $("intro");
 const music = $("music");
@@ -1145,8 +1152,8 @@ $("enterBtn").addEventListener("click", async () => {
     intro.classList.add("hidden");
     playBackground();
     
-    // Ativa os sensores do giroscópio ao entrar
-    initGyroscope();
+    // ATIVA O GIROSCÓPIO NO CLIQUE DE ENTRADA
+    enableGyro();
 
     try {
         await music.play();
