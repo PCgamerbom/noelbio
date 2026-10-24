@@ -200,6 +200,7 @@ button {
     display: inline-block;
     text-decoration: none;
     margin-top: 24px;
+    position: relative;
 }
 
 .avatar-wrap {
@@ -236,6 +237,40 @@ button {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+}
+
+/* BOTÃO ATUALIZAR */
+
+.refresh-btn {
+    position: absolute;
+    top: 50%;
+    right: -14px;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 50%;
+    background: rgba(14,15,20,.9);
+    color: #ccc;
+    backdrop-filter: blur(8px);
+    transition: transform .3s, border-color .25s, color .25s;
+}
+
+.refresh-btn:hover {
+    transform: translateY(-50%) rotate(180deg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.refresh-btn.spinning svg {
+    animation: spin .6s linear;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* STATUS ABAIXO DO AVATAR */
@@ -732,6 +767,12 @@ button {
         height: 98px;
     }
 
+    .refresh-btn {
+        width: 26px;
+        height: 26px;
+        right: -10px;
+    }
+
     .socials {
         gap: 8px;
     }
@@ -799,8 +840,7 @@ button {
         <h1 class="intro-title">NOEL BIO</h1>
         <div class="intro-hint">Click to enter</div>
 
-        <button class="start-btn" id="enterBtn">Enter<span>↗</span>
-        </button>
+        <button class="start-btn" id="enterBtn">Enter<span>↗</span></button>
     </div>
 </div>
 
@@ -836,6 +876,14 @@ button {
                     >
                 </div>
             </div>
+
+            <!-- BOTÃO ATUALIZAR PERFIL -->
+            <button class="refresh-btn" id="refreshProfile" aria-label="Atualizar perfil" title="Atualizar perfil">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 4v6h6"/>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+            </button>
         </a>
 
         <!-- STATUS ABAIXO DO AVATAR -->
@@ -932,8 +980,8 @@ button {
         </div>
 
         <audio id="music" preload="metadata" loop crossorigin="anonymous">
-  <source src="https://drive.google.com/uc?export=download&amp;id=1xq5fXl9wYpnqMbI4bwTPpnLIjWEQ7Zk1" type="audio/mpeg">
-</audio>
+            <source src="https://drive.google.com/uc?export=download&amp;id=1xq5fXl9wYpnqMbI4bwTPpnLIjWEQ7Zk1" type="audio/mpeg">
+        </audio>
 
     </section>
 </main>
@@ -1152,34 +1200,16 @@ function formatTime(seconds) {
    AVATAR E STATUS DO ROBLOX
 ================================== */
 
-/*
-   O endpoint /api/roblox precisa existir no servidor para fornecer
-   o avatar e o status real.
-
-   Formato esperado:
-   {
-     "user": {
-       "id": 123456,
-       "name": "PCgamerbom",
-       "displayName": "PCgamerbom",
-       "avatarUrl": "https://..."
-     },
-     "presence": {
-       "userPresenceType": 1
-     }
-   }
-
-   userPresenceType:
-   0 = Offline
-   1 = Online
-   2 = In game
-   3 = In Studio
-*/
+let refreshTimer = null;
+const REFRESH_INTERVAL = 60_000; // 60s
 
 async function loadRobloxProfile() {
     const presence = $("mainRobloxPresence");
     const statusText = $("mainPresenceText");
     const avatar = $("mainRobloxAvatar");
+    const btn = $("refreshProfile");
+
+    btn.classList.add("spinning");
 
     try {
         const response = await fetch(
@@ -1229,42 +1259,43 @@ async function loadRobloxProfile() {
             case 0:
                 statusText.textContent = "Offline";
                 break;
-
             case 1:
                 presence.classList.add("online");
                 statusText.textContent = "Online";
                 break;
-
             case 2:
                 presence.classList.add("in-game");
                 statusText.textContent = "In-game";
                 break;
-
             case 3:
                 presence.classList.add("in-game");
                 statusText.textContent = "In Studio";
                 break;
-
             default:
                 statusText.textContent = "Status indisponível";
         }
 
     } catch (error) {
-        /*
-           Não inventa um status quando o serviço não responde.
-           Mantém o link do perfil disponível.
-        */
         statusText.textContent = "Status indisponível";
         presence.classList.remove("online", "in-game");
-
-        console.warn(
-            "O status do Roblox precisa do endpoint /api/roblox:",
-            error
-        );
+        console.warn("O status do Roblox precisa do endpoint /api/roblox:", error);
+    } finally {
+        btn.classList.remove("spinning");
     }
 }
 
+// Botão manual
+$("refreshProfile").addEventListener("click", loadRobloxProfile);
+
+// Auto-refresh
+function startAutoRefresh() {
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(loadRobloxProfile, REFRESH_INTERVAL);
+}
+
+// Inicia
 loadRobloxProfile();
+startAutoRefresh();
 
 /* ==================================
    PERSONALIZAÇÃO DE CORES
@@ -1374,4 +1405,4 @@ if (window.matchMedia("(pointer: fine)").matches) {
 </script>
 
 </body>
-</html>
+</html>   
