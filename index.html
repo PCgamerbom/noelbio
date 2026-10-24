@@ -34,6 +34,7 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     isolation: isolate;
+    perspective: 1000px; /* NECESSÁRIO PARA O EFEITO 3D DO GIROSCÓPIO */
 }
 
 button, a, input {
@@ -67,7 +68,8 @@ button {
     z-index: -2;
     object-fit: cover;
     background: transparent;
-    filter: brightness(.42) saturate(.85);
+    filter: brightness(1) saturate(.85);
+    transition: transform 0.1s ease-out; /* Transição suave do giroscópio no fundo */
 }
 
 .background-overlay {
@@ -157,6 +159,8 @@ button {
     -webkit-backdrop-filter: blur(22px);
     box-shadow: 0 30px 100px rgba(0,0,0,.4);
     animation: appear .9s ease both;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out; /* Transição suave de inclinação 3D */
 }
 
 /* BORDA ESTÁTICA DO CARD */
@@ -223,14 +227,12 @@ button {
     z-index: 2;
 }
 
-/* AVATAR ROBLOX (NÃO CLICÁVEL) */
+/* AVATAR ROBLOX (ESTÁTICO COM INDICADOR NÃO CLICÁVEL) */
 .avatar-container {
     position: relative;
     display: inline-block;
     margin-top: 24px;
     z-index: 2;
-    pointer-events: none; /* BLOQUEIA QUALQUER INTERAÇÃO */
-    user-select: none;
 }
 
 .avatar-wrap {
@@ -275,6 +277,7 @@ button {
     color: #ccc;
     backdrop-filter: blur(8px);
     pointer-events: none;
+    user-select: none;
 }
 
 .refresh-indicator.spinning svg {
@@ -323,10 +326,6 @@ button {
     line-height: 1;
     position: relative;
     z-index: 2;
-}
-
-.name span {
-    color: var(--accent);
 }
 
 .tagline {
@@ -802,7 +801,7 @@ button {
 </div>
 
 <header class="topbar">
-    <div class="brand" id="brandText">NOEL<span>.SPACE</span></div>
+    <div class="brand" id="brandText">NOEL</div>
 
     <div class="top-status">
         <span class="live-dot"></span>
@@ -811,14 +810,14 @@ button {
 </header>
 
 <main class="main">
-    <section class="bio-card">
+    <section class="bio-card" id="bioCard">
 
         <!-- ESTRELAS CADENTES DENTRO DO CARD -->
         <div class="stars-container" id="starsContainer"></div>
 
         <div class="eyebrow">Personal Profile</div>
 
-        <!-- AVATAR DO ROBLOX (COMPLETAMENTE NÃO CLICÁVEL) -->
+        <!-- AVATAR DO ROBLOX COM BOTÃO DE ATUALIZAR (NÃO CLICÁVEL) -->
         <div class="avatar-container">
             <div class="avatar-wrap">
                 <div class="avatar">
@@ -830,8 +829,8 @@ button {
                 </div>
             </div>
 
-            <!-- INDICADOR VISUAL NÃO CLICÁVEL -->
-            <div class="refresh-indicator" id="refreshProfile" title="Sincronização do Perfil">
+            <!-- BOTÃO/INDICADOR VISUAL DE ATUALIZAR PERFIL (NÃO CLICÁVEL) -->
+            <div class="refresh-indicator" id="refreshProfile" title="Atualizando dados do perfil">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M1 4v6h6"/>
                     <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
@@ -845,7 +844,7 @@ button {
             <span id="mainPresenceText">Carregando status...</span>
         </div>
 
-        <h1 class="name">NOEL<span>.</span></h1>
+        <h1 class="name">NOEL</h1>
 
         <p class="tagline">
             UGC Creator · Builder · Modeler.
@@ -982,7 +981,7 @@ button {
 
     <div class="field">
         <label for="backgroundBrightness">Brilho do vídeo</label>
-        <input class="range" id="backgroundBrightness" type="range" min="10" max="100" value="42">
+        <input class="range" id="backgroundBrightness" type="range" min="10" max="100" value="100">
     </div>
 
     <button class="reset" id="resetSettings">Restaurar padrão</button>
@@ -994,6 +993,57 @@ button {
 
 <script>
 const $ = id => document.getElementById(id);
+
+/* ==================================
+   GIROSCÓPIO & PARALLAX 3D PARA CELULAR
+================================== */
+const bioCard = $("bioCard");
+const videoBg = $("backgroundVideo");
+
+function handleOrientation(event) {
+    // gamma: esquerda/direita (-90 até 90)
+    // beta: frente/trás (-180 até 180)
+    let x = event.gamma; 
+    let y = event.beta;  
+
+    if (x === null || y === null) return;
+
+    // Trava limites máximos de rotação para ficar suave e elegante
+    x = Math.max(-30, Math.min(30, x));
+    y = Math.max(-30, Math.min(30, y));
+
+    // Calcula os graus de rotação do Card 3D
+    const rotateY = (x / 30) * 12; // até 12 graus
+    const rotateX = -(y / 30) * 12;
+
+    // Move o card em 3D
+    if (bioCard) {
+        bioCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    // Move suavemente o vídeo de fundo no sentido oposto para o efeito de profundidade
+    if (videoBg) {
+        const moveX = (x / 30) * 15;
+        const moveY = (y / 30) * 15;
+        videoBg.style.transform = `scale(1.1) translate(${-moveX}px, ${-moveY}px)`;
+    }
+}
+
+function initGyroscope() {
+    // Para iOS 13+ que exige solicitação de permissão
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            })
+            .catch(console.error);
+    } else if (window.DeviceOrientationEvent) {
+        // Para Android e outros navegadores
+        window.addEventListener('deviceorientation', handleOrientation);
+    }
+}
 
 /* ==================================
    GERADOR DE ESTRELAS CADENTES DENTRO DO CARD
@@ -1036,7 +1086,7 @@ function typeWriterEffect() {
     
     const brand = $("brandText");
     if (brand) {
-        brand.innerHTML = (currentText || "N") + "<span>.SPACE</span>";
+        brand.textContent = currentText || "N";
     }
 
     let typeSpeed = 220;
@@ -1081,7 +1131,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* ==================================
-   INTRO E INÍCIO DA MÚSICA
+   INTRO E INÍCIO DA MÚSICA + ATIVAÇÃO DO GIROSCÓPIO
 ================================== */
 const intro = $("intro");
 const music = $("music");
@@ -1094,6 +1144,9 @@ let isPlaying = false;
 $("enterBtn").addEventListener("click", async () => {
     intro.classList.add("hidden");
     playBackground();
+    
+    // Ativa os sensores do giroscópio ao entrar
+    initGyroscope();
 
     try {
         await music.play();
@@ -1221,45 +1274,57 @@ loadRobloxProfile();
 setInterval(loadRobloxProfile, 60_000);
 
 /* ==================================
-   CONFIGURAÇÕES VISUAIS
+   CONFIGURAÇÕES VISUAIS + LOCALSTORAGE
 ================================== */
 const settingsToggle = $("settingsToggle");
 const settingsPanel = $("settingsPanel");
 const closeSettings = $("closeSettings");
+const rootStyle = document.documentElement.style;
 
 settingsToggle.addEventListener("click", () => settingsPanel.classList.toggle("open"));
 closeSettings.addEventListener("click", () => settingsPanel.classList.remove("open"));
 
-const rootStyle = document.documentElement.style;
+function applyColor(color) {
+    rootStyle.setProperty("--accent", color);
+    $("customColor").value = color;
+    localStorage.setItem("noel_bio_accent", color);
+
+    document.querySelectorAll(".swatch").forEach(b => {
+        if (b.getAttribute("data-color") === color) b.classList.add("active");
+        else b.classList.remove("active");
+    });
+}
+
+function applyBrightness(val) {
+    const filterVal = val / 100;
+    $("backgroundVideo").style.filter = `brightness(${filterVal}) saturate(.85)`;
+    $("backgroundBrightness").value = val;
+    localStorage.setItem("noel_bio_brightness", val);
+}
+
+const savedAccent = localStorage.getItem("noel_bio_accent") || "#b8ff65";
+const savedBrightness = localStorage.getItem("noel_bio_brightness") || "100";
+
+applyColor(savedAccent);
+applyBrightness(savedBrightness);
+
 document.querySelectorAll(".swatch").forEach(btn => {
     btn.addEventListener("click", () => {
-        document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const color = btn.getAttribute("data-color");
-        rootStyle.setProperty("--accent", color);
-        $("customColor").value = color;
+        applyColor(btn.getAttribute("data-color"));
     });
 });
 
 $("customColor").addEventListener("input", (e) => {
-    rootStyle.setProperty("--accent", e.target.value);
-    document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"));
+    applyColor(e.target.value);
 });
 
 $("backgroundBrightness").addEventListener("input", (e) => {
-    const val = e.target.value / 100;
-    $("backgroundVideo").style.filter = `brightness(${val}) saturate(.85)`;
+    applyBrightness(e.target.value);
 });
 
 $("resetSettings").addEventListener("click", () => {
-    rootStyle.setProperty("--accent", "#b8ff65");
-    $("customColor").value = "#b8ff65";
-    $("backgroundVideo").style.filter = "brightness(.42) saturate(.85)";
-    $("backgroundBrightness").value = 42;
-    document.querySelectorAll(".swatch").forEach((b, idx) => {
-        if (idx === 0) b.classList.add("active");
-        else b.classList.remove("active");
-    });
+    applyColor("#b8ff65");
+    applyBrightness(100);
 });
 
 /* ==================================
