@@ -189,7 +189,7 @@ button {
     text-transform: uppercase;
 }
 
-/* AVATAR ROBLOX (CONTAINER SEPARADO DO BOTÃO) */
+/* AVATAR ROBLOX (CONTAINER SEPARADO) */
 .avatar-container {
     position: relative;
     display: inline-block;
@@ -237,8 +237,8 @@ button {
     border-radius: 50%;
 }
 
-/* BOTÃO ATUALIZAR FORA DO LINK */
-.refresh-btn {
+/* INDICADOR VISUAL NÃO CLICÁVEL */
+.refresh-indicator {
     position: absolute;
     top: 50%;
     right: -14px;
@@ -253,17 +253,11 @@ button {
     background: rgba(14,15,20,.9);
     color: #ccc;
     backdrop-filter: blur(8px);
-    transition: transform .3s, border-color .25s, color .25s;
-    cursor: pointer;
+    pointer-events: none; /* NÃO PERMITE CLIQUE */
+    user-select: none;
 }
 
-.refresh-btn:hover {
-    transform: translateY(-50%) rotate(180deg);
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.refresh-btn.spinning svg {
+.refresh-indicator.spinning svg {
     animation: spin .6s linear infinite;
 }
 
@@ -738,7 +732,7 @@ button {
     .main { padding: 15px 13px 75px; }
     .bio-card { padding: 29px 19px; }
     .avatar-wrap { width: 98px; height: 98px; }
-    .refresh-btn { width: 26px; height: 26px; right: -10px; }
+    .refresh-indicator { width: 26px; height: 26px; right: -10px; }
     .socials { gap: 8px; }
     .social { gap: 7px; padding: 10px 6px; }
     .social-text { font-size: 11px; }
@@ -793,7 +787,7 @@ button {
 
         <div class="eyebrow">Personal Profile</div>
 
-        <!-- AVATAR DO ROBLOX (Estrutura Separada) -->
+        <!-- AVATAR DO ROBLOX -->
         <div class="avatar-container">
             <a
                 class="avatar-link"
@@ -814,13 +808,13 @@ button {
                 </div>
             </a>
 
-            <!-- Botão de Atualizar Perfil -->
-            <button class="refresh-btn" id="refreshProfile" aria-label="Atualizar perfil" title="Atualizar perfil">
+            <!-- INDICADOR VISUAL NÃO CLICÁVEL -->
+            <div class="refresh-indicator" id="refreshProfile" title="Sincronização do Perfil">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M1 4v6h6"/>
                     <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
                 </svg>
-            </button>
+            </div>
         </div>
 
         <!-- STATUS ABAIXO DO AVATAR -->
@@ -912,7 +906,7 @@ button {
             >
         </div>
 
-        <!-- ÁUDIO BUSCANDO DOS ARQUIVOS LOCAIS DO GITHUB -->
+        <!-- ÁUDIO -->
         <audio id="music" preload="metadata" loop>
             <source src="./music.mp3" type="audio/mpeg">
             <source src="./Music.mp3" type="audio/mpeg">
@@ -1096,10 +1090,11 @@ async function loadRobloxProfile() {
     const presence = $("mainRobloxPresence");
     const statusText = $("mainPresenceText");
     const avatar = $("mainRobloxAvatar");
-    const btn = $("refreshProfile");
+    const indicator = $("refreshProfile");
     const profileLink = $("avatarProfileLink");
 
-    if (btn) btn.classList.add("spinning");
+    // Ativa a rotação do indicador visual enquanto carrega os dados
+    if (indicator) indicator.classList.add("spinning");
 
     try {
         const response = await fetch("/api/roblox", { cache: "no-store" });
@@ -1137,23 +1132,14 @@ async function loadRobloxProfile() {
         console.warn("Não foi possível carregar perfil do Roblox:", error);
         if (statusText) statusText.textContent = "Offline";
     } finally {
-        // Garante que a animação de rotação pare
+        // Para a rotação do indicador após terminar
         setTimeout(() => {
-            if (btn) btn.classList.remove("spinning");
+            if (indicator) indicator.classList.remove("spinning");
         }, 600);
     }
 }
 
-// Evento do botão de atualizar perfil
-const refreshBtn = $("refreshProfile");
-if (refreshBtn) {
-    refreshBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        loadRobloxProfile();
-    });
-}
-
+// Atualiza o perfil automaticamente na abertura e a cada 60s
 loadRobloxProfile();
 setInterval(loadRobloxProfile, 60_000);
 
